@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .player {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .community-cards {
+            margin: 20px 0;
+        }
+    </style>
+
+</head>
+<!-- <span style="font-size: 80px;">&#x1F0A1;</span><span style="font-size: 80px; color: red;">&#x1F0B1;</span><span style="font-size: 80px;">&#x1F0C1;</span><span style="font-size: 80px; color: red;">&#x1F0D1;</span> -->
+<body>
+    <h1>Poker Game</h1>
+    <div id="game-state">
+        <div class="community-cards">
+            <h2>Community Cards</h2>
+            <div id="community-cards">No community cards yet.
+		    <!--
+                <div class="playingCards faceImages">
+                    <div class="card rank-a spades"><span class="rank">A</span><span class="suit">&spades;</span></div>
+                    <div class="card rank-k hearts"><span class="rank">K</span><span class="suit">&hearts;</span></div>
+                    <div class="card rank-k diams"><span class="rank">K</span><span class="suit">&diams;</span></div>
+                    <div class="card back">*</div>
+                    <div class="card rank-j hearts"><span class="rank">J</span><span class="suit">&hearts;</span></div>
+                </div>
+		    -->
+            </div>
+        </div>
+        <div class="players">
+            <h2>Players</h2>
+            <div id="players">No players yet.</div>
+        </div>
+        <div class="pot">
+            <h2>Pot: <span id="pot">0</span> chips</h2>
+        </div>
+    </div>
+
+    <script>
+        const ws = new WebSocket("ws://localhost:8080/ui");
+
+        ws.onmessage = function(event) {
+            const gameState = JSON.parse(event.data);
+            updateUI(gameState);
+        };
+
+        function updateUI(gameState) {
+            // Update community cards
+            const communityCards = document.getElementById("community-cards");
+            if (gameState.communityCards && gameState.communityCards.length > 0) {
+                communityCards.innerHTML = gameState.communityCards
+                    .map(card => `<div>${card.rank} of ${card.suit.longname}</div>`)
+                    .join("");
+            } else {
+                communityCards.innerHTML = "No community cards yet.";
+            }
+
+            // Update players
+            const players = document.getElementById("players");
+            if (gameState.players && gameState.players.length > 0) {
+                players.innerHTML = gameState.players
+                    .map(player => `
+                        <div class="player">
+                            <h3>${player.name}</h3>
+                            <p>Stack: ${player.stack} chips</p>
+                            ${player.hand && player.hand.length > 0
+                                ? `<p>Hand: ${player.hand.map(card => `${card.rank} of ${card.suit.longname}`).join(", ")}</p>`
+                                : `<p>Hand: Not yet dealt.</p>`
+                            }
+                        </div>
+                    `)
+                    .join("");
+            } else {
+                players.innerHTML = "No players yet.";
+            }
+
+            // Update pot
+            document.getElementById("pot").textContent = gameState.pot || 0;
+        }
+    </script>
+</body>
+</html>
